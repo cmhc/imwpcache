@@ -1,1 +1,0 @@
-<?php return array('type'=>'file','host'=>'','port'=>'','expires'=>'86400');
