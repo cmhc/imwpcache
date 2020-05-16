@@ -2,7 +2,9 @@
 /**
  * 缓存管理类
  */
-class imwpcacheAdmin
+namespace imwpcache\classes;
+
+class admin
 {
     private $config;
 
@@ -13,39 +15,42 @@ class imwpcacheAdmin
      */
     public function __construct()
     {
-        add_action('init', array(&$this, 'checkFlush'));
-        add_action('admin_menu', array(&$this,'addMenu'));
-        add_action('admin_enqueue_scripts', array(&$this,'loadscript'));
-        add_action('save_post_post', array(&$this, 'updateCache'), 100, 2);
+        add_action('init', array($this, 'checkFlush'));
+        // 缓存入口失效之后增加提示
+        add_action('admin_notices', array($this, 'adminNotice'));
+
+        add_action('admin_menu', array($this,'addMenu'));
+        add_action('admin_enqueue_scripts', array($this,'loadscript'));
+        add_action('save_post_post', array($this, 'updateCache'), 100, 2);
         
         //插件启用或者停用时候同时更新首页入口
-        add_action('activate_imwpcache/imwpcache.php', array(&$this, 'addCacheToInterface'));
-        add_action('deactivate_imwpcache/imwpcache.php', array(&$this,"removeCacheFromInterface"));
-        add_action('wp_footer',array(&$this, 'addCacheTag'));
+        add_action('activate_imwpcache/imwpcache.php', array($this, 'addCacheToInterface'));
+        add_action('deactivate_imwpcache/imwpcache.php', array($this,"removeCacheFromInterface"));
+        add_action('wp_footer',array($this, 'addCacheTag'));
         
         //兼容性
-        add_action('the_post',array(&$this,'postviewsCompatible'));
-        add_action('wp_ajax_nopriv_show_postviews', array(&$this,'showPostviews'));
-        add_action('wp_ajax_show_postviews', array(&$this,'showPostviews'));
+        add_action('the_post',array($this,'postviewsCompatible'));
+        add_action('wp_ajax_nopriv_show_postviews', array($this,'showPostviews'));
+        add_action('wp_ajax_show_postviews', array($this,'showPostviews'));
     }
-
 
     /**
      * 载入cache
      */
     public function loadCacheDriver()
     {
-        if (!file_exists(IMWPCACHE_DIR . '/config/cache.php')) {
+        $dir = dirname(__DIR__);
+        if (!file_exists($dir . '/config/cache.php')) {
             return false;
         }
         if (isset($this->cache)) {
             return true;
         }
 
-        $this->config = require IMWPCACHE_DIR . '/config/cache.php';
-        $driver = 'imwp' . ucfirst($this->config['type']);
-        require_once dirname(dirname(__FILE__)) . '/drivers/driver.php';
-        require_once dirname(dirname(__FILE__)) . '/drivers/' . $this->config['type'] . '.php';
+        $this->config = require_once $dir . '/config/cache.php';
+        $driver = 'imwpcache\\drivers\\' . $this->config['type'];
+        require_once $dir . '/drivers/driver.php';
+        require_once $dir . '/drivers/' . $this->config['type'] . '.php';
         $this->cache = new $driver;
         $this->cache->connect($this->config);
         return true;
@@ -56,7 +61,7 @@ class imwpcacheAdmin
      */
     public function addMenu()
     {
-        add_menu_page('IMWP缓存', 'IMWP缓存', 'manage_options', 'imwpcacheadmin', array(&$this,'imwpcacheAdminPage') );
+        add_menu_page('imwpcache', 'imwpcache', 'manage_options', 'imwpcacheadmin', array(&$this,'imwpcacheAdminPage') );
         add_submenu_page( 'imwpcacheadmin', '缓存配置', '缓存配置', 'manage_options', 'imwpcachesettings', array(&$this,'imwpcacheSettings') );
         add_submenu_page( 'imwpcacheadmin', '缓存功能', '缓存功能', 'manage_options', 'imwpcachecontrol', array(&$this,'imwpcacheControl') );
     }
@@ -74,27 +79,22 @@ class imwpcacheAdmin
 
     /**
      * 在首页入口加入缓存入口
+     * @throws  \Exception 写入异常时候确保插件不被开启
+     * @return  void 
      */
     public function addCacheToInterface()
     {
-        //backup index file
-        if (!file_exists(ABSPATH.'/index.bak.php')) {
-            if (!copy(ABSPATH.'/index.php', ABSPATH.'/index.bak.php')) {
-                echo "backup index.php file error<br/>";
-                die();
-            }
+        $content = file_get_contents(ABSPATH . '/index.php');
+
+        if (strpos($content, '/*{imwpcache*/') !== false) {
+            return true;
         }
 
-        //update index
-        $content = file_get_contents(ABSPATH.'/index.php');
-        if (strpos($content, 'imwpcache') === false) {
-            $content = str_replace("<?php", "<?php include('" . IMWPCACHE_DIR . "/bootstrap/index.php');", $content);
-            if (!file_put_contents(ABSPATH . '/index.php', $content)) {
-                echo "update index.php file error<br/>";
-                die();
-            }
-        }
+        $content = str_replace("<?php", "<?php /*{imwpcache*/ include('" . IMWPCACHE_DIR . "/bootstrap/index.php'); /*}*/", $content);
 
+        if (!file_put_contents(ABSPATH . '/index.php', $content)) {
+            throw new \Exception("写入index.php文件失败，请确保根目录可写", 1);
+        }
     }
 
     /**
@@ -103,36 +103,12 @@ class imwpcacheAdmin
      */
     public function removeCacheFromInterface()
     {
-        if (file_exists(ABSPATH.'/index.bak.php')) {
-            if (!copy(ABSPATH.'/index.bak.php', ABSPATH.'/index.php')) {
-                echo "recover index.php file error<br/>";
-            }
-        } else {
-            $content = file_get_contents(ABSPATH . '/index.php');
-            if (strpos($content, 'imwpcache') !== false) {
-                $content = str_replace("<?php include('" . IMWPCACHE_DIR . "/bootstrap/index.php');", "<?php ", $content);
-                if (!file_put_contents(ABSPATH . '/index.php', $content)) {
-                    echo "update index file error<br/>";
-                }
-            }
+        $content = file_get_contents(ABSPATH . '/index.php');
+        $content = preg_replace("|/\*{imwpcache\*/(.*?)/\*}\*/|is", "", $content);
+        if (!file_put_contents(ABSPATH . '/index.php', $content)) {
+            $line = "/*{imwpcache*/ include('" . IMWPCACHE_DIR . "/bootstrap/index.php'); /*}*/";
+            throw new \Exception("恢复index.php文件失败，请将" . ABSPATH . '/index.php' . "文件权限设置为可写", 1);
         }
-
-
-        if (file_exists(ABSPATH.'/wp-config.bak.php')) {
-            if (!copy(ABSPATH.'/wp-config.bak.php', ABSPATH.'/wp-config.php')) {
-                echo "recover wp-config.php file error<br/>";
-            }
-        } else {
-            $content = file_get_contents(ABSPATH . '/wp-config.php');
-            if (strpos($content, 'WP_CACHE') !== false) {
-                $content = str_replace("<?php define('WP_CACHE', true);", "<?php ", $content);
-                if (!file_put_contents(ABSPATH . '/wp-config.php', $content)) {
-                    echo "update wp-config file error<br/>";
-                    return false;
-                }
-            }
-        }
-
     }
 
 
@@ -193,21 +169,31 @@ class imwpcacheAdmin
                 echo "<p>当前主机未安装Memcache扩展，该选项不可用</p>";
                 return false;
             }
+
             if ($_POST['type'] == 'rediscache' && !class_exists('Redis')) {
                 echo "<p>当前主机未安装Redis扩展，该选项不可用</p>";
                 return false;
             }
 
+            if ($_POST['type'] == 'memcached' && !class_exists('Memcached')) {
+                echo "<p>当前主机未安装Memcached扩展，该选项不可用</p>";
+                return false;
+            }
+
             if ($_POST['expires'] < 60) {
                 echo "<p>缓存时间太短了，一般设置为3600(一小时)或者更高，推荐86400(一天)</p>";
+                return false;
             }
+
             $c = $this->parseConfig($_POST);
-            if (!file_put_contents( IMWPCACHE_DIR . '/config/cache.php' ,$c )) {
+            if (!file_put_contents(IMWPCACHE_DIR . '/config/cache.php', $c)) {
                 echo "<p>缓存配置写入失败，请检查插件目录权限</p>";
                 return false;
             }
+
             $this->addCacheToInterface();
         }
+
         if (file_exists(IMWPCACHE_DIR.'/config/cache.php')) {
             $config = require IMWPCACHE_DIR.'/config/cache.php';
         } else {
@@ -324,6 +310,21 @@ class imwpcacheAdmin
     }
 
     /**
+     * admin 提示
+     * @return string
+     */
+    public function adminNotice()
+    {
+        $content = file_get_contents(ABSPATH . '/index.php');
+
+        if (strpos($content, '/*{imwpcache*/') !== false) {
+            return true;
+        }
+
+        echo '<div class="update-nag">由于wp自动更新或者其他原因导致入口文件被覆盖，请<a href="admin.php?page=imwpcachesettings">保存一次缓存配置</a>来手动更新入口</div>';
+    }
+
+    /**
      * 写入配置内容
      * @param array $array 
      * @return string  <?php return array(...)
@@ -342,4 +343,3 @@ class imwpcacheAdmin
         return $str;
     }
 }
-new imwpcacheAdmin();

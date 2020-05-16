@@ -2,15 +2,16 @@
 /**
  * 使用memcache缓存
  */
-class imwpMemcache implements imwpcacheDriver
-{
+namespace imwpcache\drivers;
 
+class memcache implements driver
+{
     private $memcache;
 
     public function connect($config)
     {
         if (!$this->memcache) {
-            $this->memcache = new Memcache;
+            $this->memcache = new Memcache();
         }
 
         if ($this->memcache->connect($config['host'], $config['port'])) {

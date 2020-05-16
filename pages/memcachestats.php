@@ -13,14 +13,14 @@ echo "<table class='wp-list-table widefat fixed striped'>";
     echo "<tr><td>get累计数 </td><td>".$stats ["cmd_get"]."</td></tr>";
     echo "<tr><td>set累计数</td><td>".$stats ["cmd_set"]."</td></tr>";
 
-    $percCacheHit=((real)$stats ["get_hits"]/ (real)$stats ["cmd_get"] *100);
-    $percCacheHit=round($percCacheHit,3);
-    $percCacheMiss=100-$percCacheHit;
+    $percCacheHit = ((real) $stats["get_hits"] / (real)$stats["cmd_get"] *100);
+    $percCacheHit = round($percCacheHit,3);
+    $percCacheMiss = 100-$percCacheHit;
 
-    echo "<tr><td>命中量/命中率</td><td>".$stats ["get_hits"]." ($percCacheHit%)</td></tr>";
-    echo "<tr><td>miss/miss率</td><td>".$stats ["get_misses"]."($percCacheMiss%)</td></tr>";
+    echo "<tr><td>命中量/命中率</td><td>".$stats["get_hits"]." ($percCacheHit%)</td></tr>";
+    echo "<tr><td>miss/miss率</td><td>".$stats["get_misses"]."($percCacheMiss%)</td></tr>";
 
-    $MBRead= (real)$stats["bytes_read"]/(1024*1024);
+    $MBRead= (real) $stats["bytes_read"]/(1024*1024);
 
     echo "<tr><td>读取字节数</td><td>".$MBRead." Mega Bytes</td></tr>";
     $MBWrite=(real) $stats["bytes_written"]/(1024*1024) ;

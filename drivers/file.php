@@ -2,7 +2,9 @@
 /**
  * 利用文件实现的缓存服务
  */
-class imwpFile implements imwpcacheDriver
+namespace imwpcache\drivers;
+
+class file implements driver
 {
     protected $cacheDir;
 
@@ -147,7 +149,7 @@ class imwpFile implements imwpcacheDriver
             );
         }
 
-        if ($hits) {
+        if ($isHit) {
             //命中
             $stats['hits'] += 1;
             $stats['get'] += 1;

@@ -6,7 +6,7 @@ echo "<table class='wp-list-table widefat fixed striped'>
      <tr><td>未命中量</td><td>{$stats['misses']}</td></tr>";
 if ($stats['get'] == 0) {
     echo "<tr><td>命中率</td><td>0</td></tr>";
-}else{
+} else {
     echo "<tr><td>命中率</td><td>".intval($stats['hits']/$stats['get']*100) ."%</td></tr>";
 }
 echo "<tr><td>get总次数</td><td>{$stats['get']}</td></tr>

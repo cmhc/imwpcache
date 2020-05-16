@@ -2,7 +2,9 @@
 /**
  * 缓存接口
  */
-interface imwpcacheDriver
+namespace imwpcache\drivers;
+
+interface driver
 {
 
     /**

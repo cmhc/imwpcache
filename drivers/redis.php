@@ -2,9 +2,11 @@
 /**
  * 使用redis的缓存类
  */
-class imwpRedis implements imwpcacheDriver
-{
+namespace imwpcache\drivers;
 
+class redis implements driver
+{
+    
     private $redis;
 
     public function connect($config)

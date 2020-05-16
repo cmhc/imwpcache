@@ -2,9 +2,10 @@
 /**
  * 缓存读写类
  */
+namespace imwpcache\classes;
+
 class imwpcache
 {
-
     /**
      * 缓存对象
      */
@@ -22,11 +23,7 @@ class imwpcache
 
     public function __construct()
     {
-        if ($this->isLogin()) {
-            return false;
-        }
-
-        if (!empty($_POST)) {
+        if ($this->disableCache()) {
             return false;
         }
 
@@ -77,6 +74,10 @@ class imwpcache
         if (strpos($content, '<!--statusok-->') === false ) {
             return false;
         }
+        // 手动不缓存标记
+        if (strpos($content, '<!--disable_cache-->') !== false) {
+            return false;
+        }
         $content .= '<!--cached by imwpcache ' . date("Y-m-d H:i:s") . '-->';
         $this->Cache->set($this->key, $content, $this->config['expires']);
         return false;
@@ -97,6 +98,25 @@ class imwpcache
     }
 
     /**
+     * 表示是否能被缓存
+     * @return boolean
+     */
+    public function disableCache()
+    {
+        // 登陆状态不缓存
+        if ($this->isLogin()) {
+            return true;
+        }
+
+        // POST 结果不缓存
+        if (!empty($_POST)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * 载入选定的缓存驱动
      */
     protected function loadCacheDriver()
@@ -109,8 +129,8 @@ class imwpcache
             return true;
         }
 
-        $this->config = require($dir . '/config/cache.php');
-        $driver = 'imwp' . ucfirst($this->config['type']);
+        $this->config = require_once $dir . '/config/cache.php';
+        $driver = 'imwpcache\\drivers\\' . $this->config['type'];
         require_once $dir . '/drivers/driver.php';
         require_once $dir . '/drivers/' . $this->config['type'] . '.php';
         $this->Cache = new $driver;
