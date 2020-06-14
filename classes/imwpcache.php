@@ -27,9 +27,13 @@ class imwpcache
             return false;
         }
 
+        if (!$this->loadCacheDriver()) {
+            return false;
+        }
+
         $protocol = ($_SERVER['SERVER_PORT'] == '443') ? 'https://' : 'http://';
 
-        if ($this->isMobile()) {
+        if ($this->isMobile() && $this->config['has_mobile_page']) {
             $prefix = 'm';
         } else {
             $prefix = 'pc';
@@ -39,7 +43,6 @@ class imwpcache
         if (isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == 'xmlhttprequest') {
             $prefix .= 'ajax';
         }
-        $this->loadCacheDriver();
 
         $this->key = md5(rtrim($prefix . $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] . $_SERVER['QUERY_STRING'] , "/"));
         $result = $this->Cache->get($this->key);
@@ -134,7 +137,9 @@ class imwpcache
         require_once $dir . '/drivers/driver.php';
         require_once $dir . '/drivers/' . $this->config['type'] . '.php';
         $this->Cache = new $driver;
-        $this->Cache->connect($this->config);
+        if (!$this->Cache->connect($this->config)) {
+            return false;
+        }
         return true;
     }
 

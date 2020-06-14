@@ -52,7 +52,12 @@ class admin
         require_once $dir . '/drivers/driver.php';
         require_once $dir . '/drivers/' . $this->config['type'] . '.php';
         $this->cache = new $driver;
-        $this->cache->connect($this->config);
+        
+        if (!$this->cache->connect($this->config)) {
+            $this->cache = false;
+            return false;
+        }
+
         return true;
     }
 
@@ -122,20 +127,36 @@ class admin
             return false;
         }
 
-        $this->loadCacheDriver();
+        if (!$this->loadCacheDriver()) {
+            return false;
+        }
+
         //update post cache
         $postUrl = rtrim(get_permalink($postId), "/");
         $homeUrl = rtrim(get_bloginfo("url"), "/");
+        
         $cacheKey = array(
-            md5('m' . $postUrl),
             md5('pc' . $postUrl),
-            md5('pcajax' . $postUrl),
-            md5('majax' . $postUrl),
-            md5('m'.  $homeUrl),
             md5('pc' . $homeUrl),
-            md5('pcajax' . $homeUrl),
-            md5('majax' . $homeUrl)
         );
+
+        // pc和移动端为同一个url
+        if ($this->config['has_mobile_page']) {
+            $cacheKey[] = md5('m' . $postUrl);
+            $cacheKey[] = md5('m'.  $homeUrl);
+        }
+
+        // 有ajax载入
+        if ($this->config['has_ajax']) {
+            $cacheKey[] = md5('pcajax' . $postUrl);
+            $cacheKey[] = md5('pcajax'.  $homeUrl);
+        }
+
+        if ($this->config['has_mobile_page'] && $this->config['has_ajax']) {
+            $cacheKey[] = md5('majax' . $postUrl);
+            $cacheKey[] = md5('majax'.  $homeUrl);
+        }
+
         foreach ($cacheKey as $key) {
             $this->cache->delete($key);
         }
@@ -199,7 +220,79 @@ class admin
         } else {
             $config = array();
         }
-        require_once IMWPCACHE_DIR.'/pages/settings.php';
+
+        $form = array(
+            'method' => 'POST',
+            'action' => '',
+            'data' => array(
+                
+                array(
+                    'name' => 'type',
+                    'type' => 'select',
+                    'label' => '缓存类型',
+                    'options' => array(
+                        'file' => '文件缓存',
+                        'memcache' => 'memcache缓存',
+                        'redis' => 'redis缓存',
+                        'memcached' => 'memcached缓存',
+                    ),
+                    'value' => $config['type'],
+                    'desc'  => '缓存类型, 文件缓存不需要安装任何软件，memcache,redis需要安装以及相应php扩展',
+                ),
+
+
+                array(
+                    'name' => 'host',
+                    'type' => 'text',
+                    'label' => '缓存服务器',
+                    'value' => $config['host'],
+                    'desc'  => '缓存服务器，如果安装在本地，填写127.0.0.1',
+                ),
+
+                array(
+                    'name' => 'port',
+                    'type' => 'text',
+                    'label' => '缓存端口',
+                    'value' => $config['port'],
+                    'desc' => '填写memcache（默认11211）或者redis（默认6379）的服务端口号',
+                ),
+
+                array(
+                    'name' => 'expires',
+                    'type' => 'text',
+                    'label' => '缓存有效期',
+                    'value' => $config['expires'],
+                    'desc' => '站点如果更新不频繁，建议设着较长的过期时间，单位为秒，建议864000（十天）',
+                ),
+
+                array(
+                    'name' => 'has_mobile_page',
+                    'type' => 'select',
+                    'label' => '移动页面',
+                    'options' => array(
+                        '0' => '响应式页面',
+                        '1' => '和PC域名一致',
+                        '2' => '和PC域名不一致',
+                    ),
+                    'value' => $config['has_mobile_page'],
+                ),
+
+                array(
+                    'name' => 'has_ajax',
+                    'type' => 'select',
+                    'label' => '是否有AJAX刷新',
+                    'options' => array(
+                        '0' => '无',
+                        '1' => '有',
+                    ),
+                    'value' => $config['has_ajax'],
+                ),
+
+            ),
+        );
+
+        echo \imwpf\modules\Form::get($form);
+
     }
 
     /**
@@ -207,7 +300,10 @@ class admin
      */
     public function imwpcacheControl()
     {
-        $this->loadCacheDriver();
+        if (!$this->loadCacheDriver()) {
+            echo "缓存载入失败";
+            return ;
+        }
         if (isset($_POST['clearcache']) && $_POST['clearcache'] == '1') {
             if( $this->cache->flush() ){
                 echo "缓存已经全部清空";

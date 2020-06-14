@@ -23,7 +23,7 @@ class file implements driver
 
     public function connect($config)
     {
-
+        return true;
     }
 
     /**

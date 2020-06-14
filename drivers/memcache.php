@@ -11,7 +11,7 @@ class memcache implements driver
     public function connect($config)
     {
         if (!$this->memcache) {
-            $this->memcache = new Memcache();
+            $this->memcache = new \Memcache();
         }
 
         if ($this->memcache->connect($config['host'], $config['port'])) {

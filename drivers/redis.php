@@ -6,20 +6,21 @@ namespace imwpcache\drivers;
 
 class redis implements driver
 {
-    
+
     private $redis;
 
     public function connect($config)
     {
         if (!$this->redis) {
-            $this->redis = new Redis;
+            $this->redis = new \Redis();
         }
 
-        if ($this->redis->pconnect($config['host'], $config['port'], 5)) {
-            return true;
-        } else {
+        if (!$this->redis->pconnect($config['host'], $config['port'], 5)) {
             return false;
         }
+
+        return true;
+
     }
 
     public function set($key, $value, $expire)

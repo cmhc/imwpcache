@@ -5,7 +5,7 @@
  * @Author: huchao
  * @Date:   2020-05-09 12:27:50
  * @Last Modified by:   huchao
- * @Last Modified time: 2020-05-15 22:58:35
+ * @Last Modified time: 2020-05-16 18:20:19
  */
 namespace imwpcache\drivers;
 
@@ -16,7 +16,7 @@ class memcached implements driver
     public function connect($config)
     {
         if (!$this->Memcached) {
-            $this->Memcached = new Memcached();
+            $this->Memcached = new \Memcached();
         }
 
         if ($this->Memcached->addServer($config['host'], $config['port'])) {
