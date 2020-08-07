@@ -3,7 +3,7 @@
     Plugin Name: imwpcache
     Plugin URI: http://www.imwpweb.com/tag/imwpcache
     Description: yet another wordpress cache plugin， support memcache and file cache
-    Version: 1.1.0
+    Version: 1.2.0
     Author: imwpweb
     Author URI: http://www.imwpweb.com
 */

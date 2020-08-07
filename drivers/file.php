@@ -121,9 +121,6 @@ class file implements driver
      */
     public function isExpire($key = null)
     {
-        if ($key) {
-            $this->get($key);
-        }
         return $this->isExpire;
     }
 

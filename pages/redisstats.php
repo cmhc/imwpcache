@@ -8,7 +8,7 @@ echo "<table class='wp-list-table widefat fixed striped'>";
     echo "<tr><td>运行天数</td><td>".$stats ["uptime_in_days"]."天</td></tr>";
     echo "<tr><td>当前连接数</td><td>".$stats ["connected_clients"]."</td></tr>";
 
-    $percCacheHit=((real)$stats ["keyspace_hits"]/ ((real)$stats ["keyspace_misses"] + (real)$stats ["keyspace_hits"])*100);
+    $percCacheHit=($stats ["keyspace_hits"]/ ($stats ["keyspace_misses"] + $stats ["keyspace_hits"])*100);
     $percCacheHit = round($percCacheHit,3);
     $percCacheMiss = 100-$percCacheHit;
 

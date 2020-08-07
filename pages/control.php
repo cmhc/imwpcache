@@ -1,8 +1,6 @@
-<h2>缓存功能</h2>
-
-<h4>刷新全站缓存</h4>
-刷新全站缓存地址 <?php bloginfo('url') ?>/?imwpcache=createall，仅仅当使用文件缓存的时候开启，可以全站静态！
-<h4>清除缓存</h4>
+<div class="wrap">
+<h1>缓存功能</h1>
+<p></p>
 <form action="" method="post">
     <input type="hidden" name="clearcache" value="1">
     <input type="submit" class="button button-primary" value="清除所有缓存">
@@ -33,3 +31,4 @@ if (isset($content) && $content != '') { ?>
         <input type="submit" class="button button-primary" value="删除该缓存">
     </form>
 <?php } ?>
+</div>
