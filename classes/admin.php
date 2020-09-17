@@ -431,7 +431,7 @@ class admin
             return true;
         }
 
-        echo '<div class="update-nag">由于wp自动更新或者其他原因导致入口文件被覆盖，请<a href="admin.php?page=imwpcachesettings">保存一次缓存配置</a>来手动更新入口</div>';
+        echo '<div class="update-nag notice notice-warning inline">由于wp自动更新或者其他原因导致入口文件被覆盖，请<a href="admin.php?page=imwpcacheadmin">保存一次缓存配置</a>来手动更新入口</div>';
     }
 
     /**

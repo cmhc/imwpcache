@@ -1,5 +1,7 @@
 ## imwpcache ##
-最快的wordpress缓存插件，支持文件缓存，Memcache缓存，Redis缓存
+最快的wordpress缓存插件，支持文件缓存，SQLite缓存，Memcache缓存，Redis缓存
+
+使用本插件之前，需要先安装wordpress扩展插件imwpf，[前往下载](http://www.imwpweb.com/400.html)
 
 ## 更新记录 ##
 

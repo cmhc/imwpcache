@@ -62,7 +62,6 @@ class sqlite implements driver
         $sth->execute(array('key' => $key));
         $k = $sth->fetch();
         $sth->closeCursor();
-        var_dump($k);
         if (!empty($k)) {
             $h = $this->pdo->prepare("UPDATE content SET v=:value, ex=:expire WHERE k=:key");
         } else {
